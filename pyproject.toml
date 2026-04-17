@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vgcbot"
+version = "0.1.0"
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Landon Vance" }]
+dependencies = [
+    "huggingface_hub",
+    "nashpy==0.0.43",
+    "poke-env",
+    "setuptools==80.10.2",
+    "stable_baselines3==2.7.1",
+    "supersuit==3.9.3",
+    "tensorboard==2.20.0",
+    "torch==2.9.1",
+    "torch-tb-profiler==0.4.3",
+]
+optional-dependencies = { dev = ["pyright==1.1.408", "pytest==8.3.5", "ruff==0.11.12"] }
+
+[tool.setuptools.packages.find]
+include = ["vgc_bench*"]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["pokemon-showdown"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["vgc_bench"]
+split-on-trailing-comma = false
+
+[tool.pyright]
+include = ["vgc_bench"]
+pythonVersion = "3.13"
+reportPrivateUsage = false
+reportUnknownLambdaType = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
