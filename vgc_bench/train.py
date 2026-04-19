@@ -107,6 +107,12 @@ def train(
             ]
         )
     )
+    # Seed after env creation: RandomTeamBuilder.__init__ calls random.choices
+    # to generate agent usernames, so seeding before env creation would produce
+    # the same username every run. Showdown retains battle state per username,
+    # so a repeated username causes the server to resume old unfinished battles
+    # on reconnect, breaking reset_battles().
+    set_global_seed(run_id)
     method_tags = [
         "bc" if behavior_clone else None,
         learning_style.abbrev,
@@ -272,8 +278,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--total_steps", type=int, required=True, help="total training timesteps"
     )
+    parser.add_argument(
+        "--no_evaluate",
+        action="store_true",
+        help="skip evaluations and checkpointing (useful for quick smoke tests)",
+    )
     args = parser.parse_args()
-    set_global_seed(args.run_id)
     reg = args.reg.lower() if args.reg is not None else None
     assert (
         int(args.exploiter)
@@ -316,4 +326,5 @@ if __name__ == "__main__":
         args.team2 or None,
         args.results_suffix,
         args.total_steps,
+        evaluate=not args.no_evaluate,
     )

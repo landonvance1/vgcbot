@@ -151,9 +151,25 @@ class MaskedActorCriticPolicy(ActorCriticPolicy):
     ) -> MultiCategoricalDistribution:
         """Create masked action distribution from logits."""
         if action is not None:
+            orig_mask = mask
             mask = self._update_mask(mask, action)
-        mask = torch.where(mask == 1, 0, float("-inf"))
-        distribution = self.action_dist.proba_distribution(action_logits + mask)
+        float_mask = torch.where(mask == 1, 0.0, float("-inf"))
+        masked_logits = action_logits + float_mask
+        # Guard: _update_mask can zero out all valid actions for pos1 in
+        # degenerate states (e.g. pos0 chose pass non-forcedly when pos1
+        # only has pass available).  That produces all-inf logits → NaN
+        # after softmax → arbitrary (possibly illegal) sampled action.
+        # Fall back to the pre-update mask for any such position.
+        if action is not None:
+            orig_float_mask = torch.where(orig_mask == 1, 0.0, float("-inf"))
+            for i in range(2):
+                sl = slice(i * act_len, (i + 1) * act_len)
+                all_inf = masked_logits[:, sl].isinf().all(dim=-1, keepdim=True)
+                if all_inf.any():
+                    fallback = action_logits[:, sl] + orig_float_mask[:, sl]
+                    masked_logits = masked_logits.clone()
+                    masked_logits[:, sl] = torch.where(all_inf, fallback, masked_logits[:, sl])
+        distribution = self.action_dist.proba_distribution(masked_logits)
         assert isinstance(distribution, MultiCategoricalDistribution)
         return distribution
 
