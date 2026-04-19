@@ -42,7 +42,6 @@ When proposing architecture, observations, or training details, preserve this th
 
 ## Known issues
 
-- **`PURE_SELF_PLAY` mode is broken** (landonvance1/vgcbot#2): supersuit's `concat_vec_env` is incompatible with the official poke-env's action space shape. Use `FICTITIOUS_PLAY` mode (which uses `SingleAgentWrapper`) for all development until resolved. The obs/action pipeline itself is fine — the issue is only in supersuit's vectorization layer.
 - **`FICTITIOUS_PLAY` requires a checkpoint:** the opponent `PolicyPlayer` has no policy until `set_opp_policy` is called by the callback. `env.reset()` will time out if called before any checkpoint exists. Use `SimpleHeuristicsPlayer` as a stand-in opponent during early development.
 
 ## VGC-Bench attribution
@@ -56,4 +55,4 @@ We intentionally **omit** from VGC-Bench: `llm.py` (Llama baseline), `eval.py` (
 - Keep commits focused and meaningful.
 - When referencing the paper in code comments or docs, cite it as VGC-Bench (Angliss et al., 2025) rather than pasting large excerpts.
 - The `.venv/` directory is gitignored. New contributors run `python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"`.
-- Do not use `PURE_SELF_PLAY` mode until landonvance1/vgcbot#2 is resolved.
+- `PURE_SELF_PLAY` mode is working. The fix lives in `ShowdownEnv.get_action_mask` (overrides poke-env's teampreview mask bug where 2 Pokemon are marked active in Showdown's teampreview request and thus excluded from `valid_orders` but not from the base mask).
